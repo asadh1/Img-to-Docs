@@ -1,0 +1,328 @@
+<html>
+
+<head>
+	<meta charset='utf-8'>
+	<meta http-equiv='X-UA-Compatible' content='IE=edge'>
+	<title>Img to Docs</title>
+	<meta name='viewport' content='width=device-width, initial-scale=1'>
+	<link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons1.css">
+	<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+	<script src="https://kit.fontawesome.com/f10bf79546.js" crossorigin="anonymous"></script>
+	<script src='https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js'></script>
+	<style type="text/css">
+		select {
+			margin-bottom: 20px;
+		}
+
+		#log {
+			margin-left: 10px;
+			margin-right: 10px;
+			margin-bottom: 20px;
+		}
+
+		.droppable {
+			background: #1dadf5;
+			color: #fff;
+			padding: 35px 0 15px;
+			margin-left: 10px;
+			margin-right: 10px;
+			text-align: center;
+			outline: 2px dashed #d8eff1;
+			outline-offset: -10px;
+			-webkit-transition: outline-offset .15s ease-in-out, background-color .15s linear;
+			transition: outline-offset .15s ease-in-out, background-color .15s linear;
+		}
+
+		.droppable.dragover {
+			background: #44D362;
+			outline: 3px dashed #d8eff1;
+			outline-offset: -20px;
+		}
+
+		#drop-icon {
+			font-size: 70px;
+			fill: #d8eff1;
+			display: block;
+		}
+
+		#drop-text {
+			font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+			font-size: 1rem;
+			font-weight: 400;
+			line-height: 1.5;
+		}
+
+		.progress-bar {
+			position: relative;
+			padding-left: 0;
+			padding-right: 0;
+			margin-left: 10px;
+			margin-right: 10px;
+			margin-bottom: 30px;
+			height: 12px;
+			background: #bdc3c7;
+			overflow: hidden;
+		}
+
+		.progress-bar #progress {
+			z-index: 1;
+			position: absolute;
+			left: 0;
+			top: 0;
+			height: 100%;
+			background: #46dae1;
+		}
+
+		button {
+			margin-left: 30px;
+		}
+	</style>
+</head>
+
+<body>
+	<main>
+		<div class="block" style="margin: 15px 15px 0;">
+			<label for="langsel">Language:</label>
+			<br>
+			<select id="langsel">
+				<option value='afr'> Afrikaans </option>
+				<option value='ara'> Arabic </option>
+				<option value='aze'> Azerbaijani </option>
+				<option value='bel'> Belarusian </option>
+				<option value='ben'> Bengali </option>
+				<option value='bul'> Bulgarian </option>
+				<option value='cat'> Catalan </option>
+				<option value='ces'> Czech </option>
+				<option value='chi_sim'> Chinese </option>
+				<option value='chi_tra'> Traditional Chinese </option>
+				<option value='chr'> Cherokee </option>
+				<option value='dan'> Danish </option>
+				<option value='deu'> German </option>
+				<option value='ell'> Greek </option>
+				<option value='eng' selected> English </option>
+				<option value='enm'> English (Old) </option>
+				<option value='meme'> Internet Meme </option>
+				<option value='epo'> Esperanto </option>
+				<option value='epo_alt'> Esperanto alternative </option>
+				<option value='equ'> Math </option>
+				<option value='est'> Estonian </option>
+				<option value='eus'> Basque </option>
+				<option value='fin'> Finnish </option>
+				<option value='fra'> French </option>
+				<option value='frk'> Frankish </option>
+				<option value='frm'> French (Old) </option>
+				<option value='glg'> Galician </option>
+				<option value='grc'> Ancient Greek </option>
+				<option value='heb'> Hebrew </option>
+				<option value='hin'> Hindi </option>
+				<option value='hrv'> Croatian </option>
+				<option value='hun'> Hungarian </option>
+				<option value='ind'> Indonesian </option>
+				<option value='isl'> Icelandic </option>
+				<option value='ita'> Italian </option>
+				<option value='ita_old'> Italian (Old) </option>
+				<option value='jpn'> Japanese </option>
+				<option value='kan'> Kannada </option>
+				<option value='kor'> Korean </option>
+				<option value='lav'> Latvian </option>
+				<option value='lit'> Lithuanian </option>
+				<option value='mal'> Malayalam </option>
+				<option value='mkd'> Macedonian </option>
+				<option value='mlt'> Maltese </option>
+				<option value='msa'> Malay </option>
+				<option value='nld'> Dutch </option>
+				<option value='nor'> Norwegian </option>
+				<option value='pol'> Polish </option>
+				<option value='por'> Portuguese </option>
+				<option value='ron'> Romanian </option>
+				<option value='rus'> Russian </option>
+				<option value='slk'> Slovakian </option>
+				<option value='slv'> Slovenian </option>
+				<option value='spa'> Spanish </option>
+				<option value='spa_old'> Old Spanish </option>
+				<option value='sqi'> Albanian </option>
+				<option value='srp'> Serbian (Latin) </option>
+				<option value='swa'> Swahili </option>
+				<option value='swe'> Swedish </option>
+				<option value='tam'> Tamil </option>
+				<option value='tel'> Telugu </option>
+				<option value='tgl'> Tagalog </option>
+				<option value='tha'> Thai </option>
+				<option value='tur'> Turkish </option>
+				<option value='ukr'> Ukrainian </option>
+				<option value='vie'> Vietnamese </option>
+			</select>
+		</div>
+		<div class="droppable">
+			<i id="drop-icon" class="fas fa-cloud-upload-alt"></i>
+			<p id="drop-text">Drag files here or click to upload</p>
+		</div>
+		<div class="progress-bar">
+			<span id="progress"></span>
+		</div>
+		<div style="position: relative;">
+			<textarea id="log" rows="10" cols="36" placeholder="Your image's text will show up here"></textarea>
+		</div>
+		<button id="insert-text" class="action">Insert</button>
+	</main>
+	<script>
+		$(function() {
+			$('#insert-text').click(insertText);
+		});
+
+		function insertText() {
+			this.disabled = true;
+			$('#error').remove();
+			google.script.run
+				.withSuccessHandler(
+					function(returnSuccess, element) {
+						element.disabled = false;
+					})
+				.withFailureHandler(
+					function(msg, element) {
+						showError(msg, $('#button-bar'));
+						element.disabled = false;
+					})
+				.withUserObject(this)
+				.insertText($('#log').val());
+		}
+		(function(window) {
+			function triggerCallback(e, callback) {
+				if (!callback || typeof callback !== 'function') {
+					return;
+				}
+				var files;
+				if (e.dataTransfer) {
+					files = e.dataTransfer.files;
+				} else if (e.target) {
+					files = e.target.files;
+				}
+				callback.call(null, files);
+			}
+
+			function makeDroppable(ele, callback) {
+				var input = document.createElement('input');
+				input.setAttribute('type', 'file');
+				input.style.display = 'none';
+				input.addEventListener('change', function(e) {
+					triggerCallback(e, callback);
+				});
+				ele.appendChild(input);
+
+				ele.addEventListener('dragover', function(e) {
+					e.preventDefault();
+					e.stopPropagation();
+					ele.classList.add('dragover');
+				});
+
+				ele.addEventListener('dragleave', function(e) {
+					e.preventDefault();
+					e.stopPropagation();
+					ele.classList.remove('dragover');
+				});
+
+				ele.addEventListener('drop', function(e) {
+					e.preventDefault();
+					e.stopPropagation();
+					ele.classList.remove('dragover');
+					triggerCallback(e, callback);
+				});
+
+				ele.addEventListener('click', function() {
+					input.value = null;
+					input.click();
+				});
+			}
+			window.makeDroppable = makeDroppable;
+		})(this);
+		(function(window) {
+			makeDroppable(window.document.querySelector('.droppable'), function(files) {
+				console.log(files);
+				var fileName = files[0].name
+				if (fileName) {
+					let reader = new FileReader();
+					let file = files[0];
+					reader.readAsDataURL(file);
+					startRecognize(file);
+				} else {
+					label.innerHTML = labelVal;
+					$("#drop-icon").addClass("fa-cloud-upload-alt");
+					$("#drop-icon").removeClass("fa-check");
+					$("#drop-icon").removeClass("fa-spinner fa-pulse");
+				}
+			});
+		})(this);
+
+		function startRecognize(img) {
+			$("#drop-icon").removeClass("fa-cloud-upload-alt");
+			$("#drop-icon").addClass("fa-spinner fa-pulse");
+			$("#drop-text").html("Recognizing Text...");
+			recognizeFile(img);
+		}
+
+		function progressUpdate(packet) {
+			var log = document.getElementById('log');
+			if (packet.status == 'done') {
+				var result = (packet.data
+					.replace(/\n\s*\n/g, '\n')
+					.replace(new RegExp("\n« ", 'g'), '\n* ')
+					.replace(new RegExp("\n- ", 'g'), '\n* ')
+					.replace(new RegExp("\n\\+ ", 'g'), '\n* '));
+				log.value = result;
+				$("#drop-icon").removeClass('fa-spinner fa-pulse');
+				$("#drop-icon").addClass('fa-check');
+				$("#drop-text").html("Done!");
+				setTimeout(function() {
+					$("#drop-icon").animate({
+						opacity: 0.4
+					}, 500)
+					$("#drop-text").animate({
+						opacity: 0.4
+					}, 500)
+					setTimeout(function() {
+						$("#drop-icon").removeClass('fa-check');
+						$("#drop-icon").addClass("fa-cloud-upload-alt");
+						$("#drop-icon").animate({
+							opacity: 1
+						}, 500);
+						$("#drop-text").html("Drag files here or click to upload");
+						$("#drop-text").animate({
+							opacity: 1
+						}, 500);
+						$("#progress").width("0%");
+					}, 500);
+				}, 500);
+			} else {
+				console.info(packet)
+				if (packet.status == "recognizing text") {
+					$("#progress").width(`${packet.progress * 100}%`);
+				}
+			}
+		}
+
+		function recognizeFile(file) {
+			$("#log").empty();
+			const worker = new Tesseract.createWorker({
+				logger: m => progressUpdate(m),
+			});
+
+			(async () => {
+				await worker.load();
+				await worker.loadLanguage($("#langsel").val());
+				await worker.initialize($("#langsel").val());
+				const {
+					data: {
+						text
+					}
+				} = await worker.recognize(file);
+				progressUpdate({
+					status: 'done',
+					data: text
+				});
+				await worker.terminate();
+			})();
+		}
+	</script>
+</body>
+
+</html>
