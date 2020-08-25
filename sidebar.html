@@ -11,7 +11,7 @@
 	<script src='https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js'></script>
 	<style type="text/css">
 		select {
-			margin-bottom: 20px;
+			margin-bottom: 10px;
 		}
 
 		#log {
@@ -23,7 +23,7 @@
 		.droppable {
 			background: #1dadf5;
 			color: #fff;
-			padding: 35px 0 15px;
+			padding: 25px 0 8px;
 			margin-left: 10px;
 			margin-right: 10px;
 			text-align: center;
@@ -47,7 +47,7 @@
 
 		#drop-text {
 			font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-			font-size: 1rem;
+			font-size: 0.9rem;
 			font-weight: 400;
 			line-height: 1.5;
 		}
@@ -155,7 +155,7 @@
 		</div>
 		<div class="droppable">
 			<i id="drop-icon" class="fas fa-cloud-upload-alt"></i>
-			<p id="drop-text">Drag files here or click to upload</p>
+			<p id="drop-text">Drag files or click to upload</p>
 		</div>
 		<div class="progress-bar">
 			<span id="progress"></span>
@@ -180,12 +180,19 @@
 					})
 				.withFailureHandler(
 					function(msg, element) {
-						showError(msg, $('#button-bar'));
+						showError(msg, $('#insert-text'));
 						element.disabled = false;
 					})
 				.withUserObject(this)
 				.insertText($('#log').val());
 		}
+
+		function showError(msg, element) {
+			$('#error').remove();
+			var div = $('<div id="error" class="error">' + msg + '</div>');
+			$(element).after(div);
+		}
+
 		(function(window) {
 			function triggerCallback(e, callback) {
 				if (!callback || typeof callback !== 'function') {
@@ -203,6 +210,7 @@
 			function makeDroppable(ele, callback) {
 				var input = document.createElement('input');
 				input.setAttribute('type', 'file');
+				input.setAttribute('accept', '.png, .jpg, .bmp, .pbm');
 				input.style.display = 'none';
 				input.addEventListener('change', function(e) {
 					triggerCallback(e, callback);
@@ -242,8 +250,20 @@
 				if (fileName) {
 					let reader = new FileReader();
 					let file = files[0];
-					reader.readAsDataURL(file);
-					startRecognize(file);
+					var file_ext = fileName.substr(fileName.lastIndexOf('.') + 1, fileName.length);
+					if (file_ext === "png" || file_ext === "jpg" || file_ext === "bmp" || file_ext === "pbm") {
+						$('#error').remove();
+						reader.readAsDataURL(file);
+						try {
+							startRecognize(file);
+						} catch (error) {
+							showError("Something went wrong when reading the image", $('#insert-text'));
+							//setTimeout(function() {$('#error').remove();}, 3000);
+						}
+					} else {
+						showError("Wrong File type. Must be: .png, .jpg, .bmp, or .pbm", $('#insert-text'));
+						//setTimeout(function() {$('#error').remove();}, 3000);
+					}
 				} else {
 					label.innerHTML = labelVal;
 					$("#drop-icon").addClass("fa-cloud-upload-alt");
@@ -257,6 +277,7 @@
 			$("#drop-icon").removeClass("fa-cloud-upload-alt");
 			$("#drop-icon").addClass("fa-spinner fa-pulse");
 			$("#drop-text").html("Recognizing Text...");
+			$('#insert-text').prop('disabled', true);
 			recognizeFile(img);
 		}
 
@@ -279,13 +300,14 @@
 					$("#drop-text").animate({
 						opacity: 0.4
 					}, 500)
+					$('#insert-text').prop('disabled', false);
 					setTimeout(function() {
 						$("#drop-icon").removeClass('fa-check');
 						$("#drop-icon").addClass("fa-cloud-upload-alt");
 						$("#drop-icon").animate({
 							opacity: 1
 						}, 500);
-						$("#drop-text").html("Drag files here or click to upload");
+						$("#drop-text").html("Drag files or click to upload");
 						$("#drop-text").animate({
 							opacity: 1
 						}, 500);
