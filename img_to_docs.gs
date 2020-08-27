@@ -25,17 +25,23 @@ function insertLine(txt, brk) {
 		txt = txt.substring(2)
 	};
 
-	function curs() {
+	function insertAtCursor() {
 		if (bullet) {
 			insertBullet(txt);
 		} else {
 			if (brk) {
+				if (fakeCursor == null) {
+					throw new Error("Can't insert with only the end of the paragraph selected, please unselect and try again");
+				}
 				var el = fakeCursor.getElement();
 				var parentElement = el.getParent();
 				var childIndex = parentElement.getChildIndex(el);
 				var p = parentElement.insertParagraph(childIndex + 1, txt.substring(1));
 				fakeCursor = doc.newPosition(p, 1);
 			} else {
+				if (fakeCursor == null) {
+					throw new Error("Can't insert with only the end of the paragraph selected, please unselect and try again");
+				}
 				var surroundingText = fakeCursor.getSurroundingText().getText();
 				var surroundingTextOffset = fakeCursor.getSurroundingTextOffset();
 
@@ -50,7 +56,6 @@ function insertLine(txt, brk) {
 						txt += ' ';
 					}
 				}
-
 				fakeCursor.insertText(txt);
 				var txtEl = fakeCursor.getElement();
 				var txtOff = fakeCursor.getOffset();
@@ -86,6 +91,7 @@ function insertLine(txt, brk) {
 				}
 			} else {
 				var element = elements[i].getElement();
+				fakeCursor = doc.newPosition(element, 0);
 				if (!cleared && element.editAsText) {
 					element.clear();
 					cleared = true;
@@ -99,45 +105,85 @@ function insertLine(txt, brk) {
 			}
 		}
 		doc.setCursor(fakeCursor);
-		curs();
+		insertAtCursor();
 	} else {
-		curs();
+		insertAtCursor();
 	}
 }
 
 function insertBullet(txt) {
-	fakeCursor.insertText('\r');
-	var el = fakeCursor.getElement();
-	var parentElement = el.getParent();
-	var childIndex = parentElement.getChildIndex(el);
+	var el = fakeCursor.getElement(),
+		offset = fakeCursor.getOffset();
 
-	function recreate(t) {
-		if (el.getType() == DocumentApp.ElementType.PARAGRAPH) {
-			parentElement.insertParagraph(childIndex, t)
-		} else if (el.getType() == DocumentApp.ElementType.LIST_ITEM) {
-			parentElement.insertListItem(childIndex, t).setGlyphType(DocumentApp.GlyphType.BULLET);
+	var inParagraph = (el.getType() == DocumentApp.ElementType.PARAGRAPH || el.getType() == DocumentApp.ElementType.LIST_ITEM);
+
+	if (!inParagraph && (el.getType() != DocumentApp.ElementType.TEXT)) {
+		throw new Error("Position must be inside text or paragraph.");
+	}
+
+	var par;
+	if (inParagraph) {
+		par = el;
+		if (offset == par.getNumChildren()) {
+			var bullet = par.getParent().insertListItem(par.getParent().getChildIndex(par) + 1, txt).setGlyphType(DocumentApp.GlyphType.BULLET);
+			fakeCursor = doc.newPosition(bullet, 1);
+			return bullet;
+		}
+		el = par.getChild(offset);
+	} else {
+		par = el.getParent();
+		if (par == null || (par.getType() != DocumentApp.ElementType.PARAGRAPH && par.getType() != DocumentApp.ElementType.LIST_ITEM)) {
+			throw new Error("Cursor must be within a paragraph or a list.");
 		}
 	}
 
-	var tt = el.getText();
-	var sin = fakeCursor.getSurroundingTextOffset();
-	var before = tt.substring(0, sin);
-	var after = tt.substring(sin + 1);
+	var parContainer = par.getParent();
 
-	if (after !== '') {
-		recreate(after);
-	}
-	var middle = parentElement.insertListItem(childIndex, txt).setGlyphType(DocumentApp.GlyphType.BULLET);
-	if (before != '') {
-		recreate(before);
+	if (!("insertParagraph" in parContainer)) {
+		throw new Error("Cannot insert another paragraph in this container.");
 	}
 
-	if (el.isAtDocumentEnd()) {
-		el.clear()
+	var elIndex = par.getChildIndex(el);
+	var newPar = par.copy();
+
+	var newEl = newPar.getChild(elIndex);
+
+	if (!inParagraph && (offset != 0)) {
+		newEl.deleteText(0, offset - 1);
+	}
+	newEl = newEl.getPreviousSibling();
+	while (newEl != null) {
+		var prevEl = newEl.getPreviousSibling();
+		newEl.removeFromParent();
+		newEl = prevEl;
+	}
+
+	var nextEl = el.getNextSibling();
+
+	if (!inParagraph && (offset != 0)) {
+		el.deleteText(offset, el.getText().length - 1);
 	} else {
-		parentElement.removeChild(el);
+		el.removeFromParent();
 	}
-	fakeCursor = doc.newPosition(middle, 1);
+
+	el = nextEl;
+	while (el != null) {
+		nextEl = el.getNextSibling();
+		el.removeFromParent();
+		el = nextEl;
+	}
+
+	switch (par.getType()) {
+		case DocumentApp.ElementType.PARAGRAPH:
+			parContainer.insertParagraph(parContainer.getChildIndex(par) + 1, newPar);
+			break;
+		case DocumentApp.ElementType.LIST_ITEM:
+			parContainer.insertListItem(parContainer.getChildIndex(par) + 1, newPar);
+			break;
+	}
+	var finalParent = newPar.getParent();
+	var bullet = finalParent.insertListItem(finalParent.getChildIndex(newPar), txt).setGlyphType(DocumentApp.GlyphType.BULLET);
+	fakeCursor = doc.newPosition(bullet, 1);
 }
 
 function insertText(txt) {
@@ -160,5 +206,7 @@ function insertText(txt) {
 		}
 		insertLine(line, brk);
 	}
-	doc.setCursor(fakeCursor);
+	if (lines.length > 0) {
+		doc.setCursor(fakeCursor);
+	}
 }
