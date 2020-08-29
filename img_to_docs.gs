@@ -198,13 +198,17 @@ function insertText(txt) {
 	for (i = 0; i < lines.length; i++) {
 		var line = lines[i];
 		var brk = false;
-		if (i != 0 && !line.startsWith('* ')) {
+		if (i != 0 && !line.startsWith('* ') && line != '') {
 			line = '\n' + line;
 			if (lines[i - 1].startsWith('* ')) {
 				brk = true;
 			}
 		}
-		insertLine(line, brk);
+		if (line != '') {
+			insertLine(line, brk);
+		} else if (i != 0) {
+			insertLine('\n', brk);
+		}
 	}
 	if (lines.length > 0) {
 		doc.setCursor(fakeCursor);
