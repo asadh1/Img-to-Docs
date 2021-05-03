@@ -7,7 +7,7 @@ Img to Docs  is a sidebar add-on for Google Docs that allows you to quickly and 
 
 ### Installation
 
-Img to Docs is available for installing from the [G Suite Marketplace](https://gsuite.google.com/marketplace/app/img_to_docs/1024533292248). Just select "Install" to start using it.
+Img to Docs is available for installing from the [G Suite Marketplace](https://gsuite.google.com/marketplace/app/img_to_docs_image_ocr/1024533292248). Just select "Install" to start using it.
 
 ### Opening the Sidebar
 
@@ -47,4 +47,4 @@ This project uses [Tesseract.js](https://tesseract.projectnaptha.com/) for it's 
 
 ---
 
-[G Suite Marketplace](https://gsuite.google.com/marketplace/app/img_to_docs/1024533292248) | [Homepage](https://hashimasad.com/img-to-docs/) | [Privacy Policy](https://hashimasad.com/img-to-docs/privacy-policy/) | [Terms of Service](https://hashimasad.com/img-to-docs/tos/)
+[G Suite Marketplace](https://gsuite.google.com/marketplace/app/img_to_docs_image_ocr/1024533292248) | [Homepage](https://hashimasad.com/img-to-docs/) | [Privacy Policy](https://hashimasad.com/img-to-docs/privacy-policy/) | [Terms of Service](https://hashimasad.com/img-to-docs/tos/)
