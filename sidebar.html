@@ -240,7 +240,7 @@
 			function makeDroppable(ele, callback) {
 				var input = document.createElement('input');
 				input.setAttribute('type', 'file');
-				input.setAttribute('accept', '.png, .jpg, .bmp, .pbm');
+				input.setAttribute('accept', '.png, .jpg, .jpeg, .bmp, .pbm');
 				input.style.display = 'none';
 				input.addEventListener('change', function(e) {
 					triggerCallback(e, callback);
@@ -281,7 +281,7 @@
 					let reader = new FileReader();
 					let file = files[0];
 					var file_ext = fileName.substr(fileName.lastIndexOf('.') + 1, fileName.length);
-					if (file_ext === "png" || file_ext === "jpg" || file_ext === "bmp" || file_ext === "pbm") {
+					if (file_ext === "png" || file_ext === "jpg" || file_ext === "jpeg" || file_ext === "bmp" || file_ext === "pbm") {
 						$('#error').remove();
 						reader.readAsDataURL(file);
 						try {
